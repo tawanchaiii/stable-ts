@@ -58,16 +58,31 @@ def load_hf_pipe(model_name: str, device: str = None, flash: bool = False):
         except ValueError:
             pass
 
-    pipe = pipeline(
-        "automatic-speech-recognition",
-        model=model,
-        tokenizer=processor.tokenizer,
-        feature_extractor=processor.feature_extractor,
-        max_new_tokens=128,
-        chunk_length_s=30,
-        torch_dtype=dtype,
-        device=device,
-    )
+
+
+    if model_id == HF_MODELS.get("thonburi_medium") or model_id == HF_MODELS.get("thonburi_large-v3"):
+        pipe = pipeline(
+            task="automatic-speech-recognition",
+            model=HF_MODELS.get(model_name),
+            chunk_length_s=30,
+            device=device,
+        )
+
+        pipe.model.config.forced_decoder_ids = pipe.tokenizer.get_decoder_prompt_ids(
+            language="th",
+            task="transcribe"
+        )
+    else:
+        pipe = pipeline(
+            "automatic-speech-recognition",
+            model=model,
+            tokenizer=processor.tokenizer,
+            feature_extractor=processor.feature_extractor,
+            max_new_tokens=128,
+            chunk_length_s=30,
+            torch_dtype=dtype,
+            device=device,
+        )
 
     return pipe
 
